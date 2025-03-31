@@ -3,7 +3,6 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/sudosz/go-utils.svg)](https://pkg.go.dev/github.com/sudosz/go-utils)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/sudosz/go-utils)](https://goreportcard.com/report/github.com/sudosz/go-utils)
-[![Coverage Status](https://coveralls.io/repos/github/sudosz/go-utils/badge.svg?branch=main)](https://coveralls.io/github/sudosz/go-utils?branch=main)
 
 **Go Utils** is a curated collection of high-performance, production-ready Go utility functions and packages. Designed for speed, efficiency, and robustness, these utilities have been rigorously tested and optimized for demanding applications.
 
@@ -33,7 +32,7 @@
 ## Installation
 
 ```bash
-go get [github.com/sudosz/go-utils](https://github.com/sudosz/go-utils)
+go get github.com/sudosz/go-utils
 ```
 
 ## Usage
@@ -43,7 +42,7 @@ Import the specific package you need:
 ```go
 import (
         "fmt"
-        "[github.com/sudosz/go-utils/strings](https://github.com/sudosz/go-utils/strings)"
+        "github.com/sudosz/go-utils/strings"
 )
 
 func main() {
@@ -51,8 +50,6 @@ func main() {
         fmt.Println(result) // Output: example string
 }
 ```
-
-Refer to the individual package documentation on [pkg.go.dev](https://pkg.go.dev/github.com/sudosz/go-utils) for detailed usage examples and API references.
 
 ## Contributing
 
