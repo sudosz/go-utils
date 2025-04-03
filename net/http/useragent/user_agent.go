@@ -5,19 +5,12 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/corpix/uarand"
 	"github.com/malisit/kolpa"
 	"github.com/mileusna/useragent"
 	"github.com/sudosz/go-utils/ints"
 )
 
 var random = rand.New(rand.NewSource(time.Now().UnixNano()))
-
-// GetRandomUserAgentUARand returns a random user agent string from the uarand.UserAgents slice.
-// This function is a utility for generating random user agent strings, which can be useful for testing or simulating user behavior.
-func GetRandomUserAgentUARand() string {
-	return uarand.UserAgents[random.Int31n(int32(len(uarand.UserAgents)))]
-}
 
 var (
 	kpg   = kolpa.C()
@@ -32,7 +25,6 @@ var (
 
 func GetRandomUserAgentKolpa() string {
 	return funcs[random.Int31n(funcsLen)]()
-	// return kpg.Firefox()
 }
 
 func GetRandomUserAgentJSON() string {
@@ -41,7 +33,6 @@ func GetRandomUserAgentJSON() string {
 
 func GenerateUserAgent() string {
 	return GetRandomUserAgentJSON()
-	// return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0"
 }
 
 // BrowserUserAgent represents the user agent information for a browser.

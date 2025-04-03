@@ -4,7 +4,6 @@ go 1.24.1
 
 require (
 	git.mills.io/prologic/bitcask v1.0.2
-	github.com/corpix/uarand v0.2.0
 	github.com/dgrr/cookiejar v0.0.0-20181027163754-344320c9f75e
 	github.com/google/uuid v1.6.0
 	github.com/malisit/kolpa v0.0.0-20201024193526-315f7b3afa5d
@@ -21,6 +20,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/plar/go-adaptive-radix-tree v1.0.4 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
+	github.com/stretchr/testify v1.7.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
 	golang.org/x/net v0.35.0 // indirect
