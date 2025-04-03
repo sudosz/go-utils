@@ -61,8 +61,7 @@ type BrowserUserAgentBrand struct {
 }
 
 func (u BrowserUserAgentBrand) String() string {
-	return fmt.Sprintf("<Brand name=%q version=%q>", u.Brand, u.Version)
-}
+	return fmt.Sprintf("<Brand name=%q version=%q>", u.Brand, u.Version)}
 
 // ParseUserAgentForBrowser parses a user agent string into BrowserUserAgent.
 // Optimization: Efficient parsing with minimal allocations.

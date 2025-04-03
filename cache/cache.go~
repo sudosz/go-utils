@@ -3,8 +3,8 @@ package cache
 import (
 	"time"
 
-	"git.mills.io/prologic/bitcask"
 	"github.com/sudosz/go-utils/bytes"
+	"git.mills.io/prologic/bitcask"
 )
 
 // Cache represents a cache using bitcask as the underlying storage.
