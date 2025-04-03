@@ -21,11 +21,11 @@ func S2b(s string) []byte {
 	return unsafe.Slice(unsafe.StringData(s), len(s))[:]
 }
 
-func ConvertSummarizedStringToInt(s string) int {
+func ConvertSummarizedString2Int(s string) int {
 	if len(s) == 0 {
 		return 0
 	}
-	f := StringToLower(s)
+	f := ToLower(s)
 	is_summarized, r := true, 1.
 	switch f[len(f)-1] {
 	case 'k':
@@ -44,7 +44,7 @@ func ConvertSummarizedStringToInt(s string) int {
 	return int(float * r)
 }
 
-func StringToInt(s string) int {
+func String2Int(s string) int {
 
 	if s == "0" {
 		return 0
@@ -68,7 +68,7 @@ func StringToInt(s string) int {
 
 	return num * neg
 }
-func StringToIntWithChecking(s string) (int, error) {
+func String2IntWithChecking(s string) (int, error) {
 
 	if s == "0" {
 		return 0, nil
@@ -99,11 +99,11 @@ func StringToIntWithChecking(s string) (int, error) {
 	return num * neg, nil
 }
 func String2Int64(s string) int64 {
-	return int64(StringToInt(s))
+	return int64(String2Int(s))
 }
 
 func Atoi(s string) int {
-	return StringToInt(s)
+	return String2Int(s)
 }
 
 func UnsafeToUpper(o byte) byte {
@@ -121,14 +121,14 @@ func UnsafeToLower(o byte) byte {
 		return o
 	}
 }
-func StringToLower(o string) string {
+func ToLower(o string) string {
 	b := make([]byte, len(o))
 	for i := range b {
 		b[i] = UnsafeToLower(o[i])
 	}
 	return bytes.B2s(b)
 }
-func StringToUpper(o string) string {
+func ToUpper(o string) string {
 	b := make([]byte, len(o))
 	for i := range b {
 		b[i] = UnsafeToUpper(o[i])
@@ -136,7 +136,7 @@ func StringToUpper(o string) string {
 	return bytes.B2s(b)
 }
 
-func ReverseString(input string) string {
+func Reverse(input string) string {
 	str := S2b(input)
 	length := len(str)
 
