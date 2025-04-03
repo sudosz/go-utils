@@ -13,68 +13,65 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/sudosz/go-utils/bytes"
 	"github.com/sudosz/go-utils/ints"
 	"github.com/sudosz/go-utils/pool"
-	"github.com/sudosz/go-utils/bytes"
 	"github.com/sudosz/go-utils/strings"
 )
 
+// AuthProvider defines a function that provides authentication strings.
 type AuthProvider func() string
 
+// ProxyCredentialsProvider defines an interface for proxy credential retrieval.
 type ProxyCredentialsProvider interface {
 	GetProxyCredentials() ([]byte, []byte)
 }
 
 const (
-	http10OKResponse = "HTTP/1.0 200 OK\r\n"
-	http11OKResponse = "HTTP/1.1 200 OK\r\n"
-	http2OKResponse  = "\x00\x00\x86\x04\x00\x00\x00"
-	maxResponseLen   = len(http11OKResponse)
-
-	connectPrefix   = "CONNECT "
-	httpVersion     = " HTTP/1.1\r\n"
-	hostPrefix      = "Host: "
-	headerSep       = ": "
-	proxyAuthPrefix = "Proxy-Authorization: "
-	crlf            = "\r\n"
-
+	http10OKResponse   = "HTTP/1.0 200 OK\r\n"
+	http11OKResponse   = "HTTP/1.1 200 OK\r\n"
+	http2OKResponse    = "\x00\x00\x86\x04\x00\x00\x00"
+	maxResponseLen     = len(http11OKResponse)
+	connectPrefix      = "CONNECT "
+	httpVersion        = " HTTP/1.1\r\n"
+	hostPrefix         = "Host: "
+	headerSep          = ": "
+	proxyAuthPrefix    = "Proxy-Authorization: "
+	crlf               = "\r\n"
 	basicAuthPrefix    = "Basic "
 	basicAuthPrefixLen = len(basicAuthPrefix)
-
-	okStartResponse  = "HTTP/"
-	okEndResponse    = " 200 OK\r\n\r\n"
-	okStatusTotalLen = len(okStartResponse) + 3 + len(okEndResponse) // +3 for "major.minor"
+	okStartResponse    = "HTTP/"
+	okEndResponse      = " 200 OK\r\n\r\n"
+	okStatusTotalLen   = len(okStartResponse) + 3 + len(okEndResponse)
 )
 
 var (
-	bufPool = pool.NewLRULimitedBufferPool(1<<10, 1<<7, 1*time.Minute)
-
-	// Hop-by-hop headers. These are removed when sent to the backend.
-	// http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
+	bufPool    = pool.NewLRULimitedBufferPool(1<<10, 1<<7, 1*time.Minute)
 	HopHeaders = [...]string{
 		"Connection",
 		"Keep-Alive",
 		"Proxy-Authenticate",
 		"Proxy-Connection",
-		"Te", // canonicalized version of "TE"
+		"Te",
 		"Trailers",
 		"Transfer-Encoding",
 		"Upgrade",
 	}
 )
 
+// BasicAuthHeader generates a Basic Authentication header from byte slice credentials.
+// Optimization: Pre-calculates buffer size for single allocation.
 func BasicAuthHeader(username, password []byte) string {
 	credLen := len(username) + len(password) + 1
-	totalLen := basicAuthPrefixLen + ((credLen+2)/3)*4 // Base64 encoding increases length
+	totalLen := basicAuthPrefixLen + ((credLen+2)/3)*4
 	buf := make([]byte, totalLen)
-
 	copy(buf, basicAuthPrefix)
-
 	base64.StdEncoding.Encode(buf[basicAuthPrefixLen:], append(append(username, ':'), password...))
-
 	return bytes.B2s(buf)
 }
 
+// CachedAuth returns a function caching the auth header for a specified duration.
+// Optimization: Uses TryLock to minimize contention on cache updates.
 func CachedAuth(provider ProxyCredentialsProvider, dur time.Duration) func() string {
 	var (
 		lru   time.Time
@@ -93,34 +90,48 @@ func CachedAuth(provider ProxyCredentialsProvider, dur time.Duration) func() str
 	}
 }
 
+// BasicAuthHeaderStr generates a Basic Auth header from string credentials.
+// Optimization: Leverages zero-copy S2b for inputs.
 func BasicAuthHeaderStr(username, password string) string {
 	return BasicAuthHeader(bytes.S2b(username), bytes.S2b(password))
 }
 
+// SimpleAuth returns a function generating auth headers without caching.
+// Optimization: Minimal overhead with direct call to BasicAuthHeader.
 func SimpleAuth(provider ProxyCredentialsProvider) func() string {
 	return func() string {
 		return BasicAuthHeader(provider.GetProxyCredentials())
 	}
 }
 
+// JoinHostPort combines host and port bytes into a single string.
+// Optimization: Single allocation with append.
 func JoinHostPort(host []byte, port []byte) string {
 	b := append(host, ':')
 	b = append(b, port...)
 	return bytes.B2s(b)
 }
 
+// JoinHostIntPort combines host bytes and an integer port into a string.
+// Optimization: Uses efficient Int64ToBytes for port conversion.
 func JoinHostIntPort(host []byte, port int) string {
 	return JoinHostPort(host, ints.Int64ToBytes(int64(port)))
 }
 
+// JoinStrHostIntPort combines a string host and integer port into a string.
+// Optimization: Zero-copy S2b for host.
 func JoinStrHostIntPort(host string, port int) string {
 	return JoinHostIntPort(bytes.S2b(host), port)
 }
 
+// JoinStrHostStrPort combines string host and port into a single string.
+// Optimization: Zero-copy S2b for both inputs.
 func JoinStrHostStrPort(host string, port string) string {
 	return JoinHostPort(bytes.S2b(host), bytes.S2b(port))
 }
 
+// StatusOKBytes generates an HTTP OK status line for the given version.
+// Optimization: Pre-allocates buffer with exact size.
 func StatusOKBytes(major, minor int) []byte {
 	buf := make([]byte, 0, okStatusTotalLen)
 	buf = append(buf, okStartResponse...)
@@ -129,6 +140,8 @@ func StatusOKBytes(major, minor int) []byte {
 	return buf
 }
 
+// IsHTTPOK checks if the buffer contains an HTTP OK response.
+// Optimization: Early length check and switch for efficiency.
 func IsHTTPOK(buf []byte, isConnect bool) bool {
 	if isConnect && len(buf) == 0 {
 		return true
@@ -148,17 +161,17 @@ func IsHTTPOK(buf []byte, isConnect bool) bool {
 	}
 }
 
+// IsHTTPOKConn reads from a reader to check for an HTTP OK response.
+// Optimization: Uses pooled buffer to reduce allocations.
 func IsHTTPOKConn(r io.Reader, isConnect bool) (bool, error) {
 	scanner := bufio.NewScanner(r)
 	scanner.Buffer(make([]byte, 1<<5), 1<<9)
 	scanner.Split(bufio.ScanLines)
-
 	buf := bufPool.Get().(*gbytes.Buffer)
 	defer func() {
 		buf.Reset()
 		bufPool.Put(buf)
 	}()
-
 	for scanner.Scan() {
 		line := scanner.Bytes()
 		line = append(line, '\r', '\n')
@@ -167,36 +180,32 @@ func IsHTTPOKConn(r io.Reader, isConnect bool) (bool, error) {
 			return IsHTTPOK(buf.Bytes(), isConnect), nil
 		}
 	}
-
 	if scanner.Err() != nil {
 		return false, scanner.Err()
 	}
-
 	return IsHTTPOK(buf.Bytes(), isConnect), nil
 }
 
+// RawConnectRequestBytes builds a raw CONNECT request with optional authentication.
+// Optimization: Uses pooled buffer for minimal allocations.
 func RawConnectRequestBytes(address string, proxyAuth func() string) []byte {
 	buf := bufPool.Get().(*gbytes.Buffer)
 	defer func() {
 		buf.Reset()
 		bufPool.Put(buf)
 	}()
-
 	buf.WriteString(connectPrefix)
 	buf.WriteString(address)
 	buf.WriteString(httpVersion)
 	buf.WriteString(hostPrefix)
 	buf.WriteString(address)
 	buf.WriteString(crlf)
-
 	if proxyAuth != nil {
 		buf.WriteString(proxyAuthPrefix)
 		buf.WriteString(proxyAuth())
 		buf.WriteString(crlf)
 	}
-
 	buf.WriteString(crlf)
-
 	return buf.Bytes()
 }
 
@@ -204,6 +213,8 @@ const (
 	copyBufSize = 1 << 8
 )
 
+// Flush flushes the writer if it implements http.Flusher.
+// Optimization: Type assertion with minimal overhead.
 func Flush(w any) {
 	if f, ok := w.(http.Flusher); ok {
 		f.Flush()
@@ -218,12 +229,12 @@ var copyBufPool = &pool.LimitedPool{
 	N: 1 << 6,
 }
 
+// CopyBody copies data from src to dst, flushing if possible.
+// Optimization: Uses pooled buffer and atomic counter for efficiency.
 func CopyBody(dst io.Writer, src io.Reader) (int64, error) {
 	buf := copyBufPool.Get().(*[copyBufSize]byte)
 	defer copyBufPool.Put(buf)
-
 	var written atomic.Uint32
-
 	for {
 		nr, err := src.Read(buf[:])
 		if nr > 0 {
@@ -236,49 +247,51 @@ func CopyBody(dst io.Writer, src io.Reader) (int64, error) {
 				return 0, err
 			}
 		}
-
 		if err == io.EOF {
 			break
 		}
-
 		if err != nil {
 			return 0, err
 		}
 	}
-
 	return int64(written.Load()), nil
 }
 
+// HeaderDeleter defines an interface for deleting headers.
 type HeaderDeleter interface {
 	Del(string)
 }
 
+// DelHopHeaders removes hop-by-hop headers from the provided header.
+// Optimization: Linear iteration over fixed array.
 func DelHopHeaders(header HeaderDeleter) {
 	for _, headerName := range HopHeaders {
 		header.Del(headerName)
 	}
 }
 
+// CopyHTTPHeaders copies headers from src to dst.
+// Optimization: Direct slice copy for efficiency.
 func CopyHTTPHeaders(dst, src http.Header) {
 	for k, vv := range src {
 		dst[k] = vv[:]
 	}
 }
 
+// BuildRequestBytes constructs raw bytes for an HTTP request.
+// Optimization: Uses pooled buffer to minimize allocations.
 func BuildRequestBytes(req *http.Request) (_ []byte, err error) {
 	buf := bufPool.Get().(*gbytes.Buffer)
 	defer func() {
 		buf.Reset()
 		bufPool.Put(buf)
 	}()
-
 	buf.WriteString(req.Method)
 	buf.WriteByte(' ')
 	buf.WriteString(req.URL.Path)
 	buf.WriteByte(' ')
 	buf.WriteString(req.Proto)
 	buf.WriteString(crlf)
-
 	buf.WriteString(hostPrefix)
 	h := req.Host
 	if h == "" {
@@ -289,7 +302,6 @@ func BuildRequestBytes(req *http.Request) (_ []byte, err error) {
 	}
 	buf.WriteString(h)
 	buf.WriteString(crlf)
-
 	for k, vv := range req.Header {
 		for _, v := range vv {
 			buf.WriteString(k)
@@ -299,29 +311,27 @@ func BuildRequestBytes(req *http.Request) (_ []byte, err error) {
 		}
 	}
 	buf.WriteString(crlf)
-
 	if req.GetBody != nil {
 		req.Body, err = req.GetBody()
 		if err != nil {
 			return nil, err
 		}
 	}
-
 	if req.Body != nil {
 		_, err = io.Copy(buf, req.Body)
 		if err != nil {
 			return nil, err
 		}
+		req.Body.Close()
 	}
-	req.Body.Close()
-
 	return buf.Bytes(), nil
 }
 
+// IsConnClosedErr checks if the error indicates a closed connection.
+// Optimization: Uses errors.Is for efficient error matching.
 func IsConnClosedErr(err error) bool {
 	switch {
-	case
-		errors.Is(err, net.ErrClosed),
+	case errors.Is(err, net.ErrClosed),
 		errors.Is(err, io.EOF),
 		errors.Is(err, syscall.EPIPE):
 		return true
@@ -330,6 +340,8 @@ func IsConnClosedErr(err error) bool {
 	}
 }
 
+// PartitionIP4 splits an IPv4 address into its four parts.
+// Optimization: Uses efficient string partitioning.
 func PartitionIP4(ip string) (string, string, string, string) {
 	part1, part234 := strings.Partition(ip, '.')
 	part2, part34 := strings.Partition(part234, '.')

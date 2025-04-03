@@ -11,28 +11,21 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+// isCookieDomainValid checks if the cookie domain is valid for the URL host.
+// Optimization: Simple string comparison with early returns.
 func isCookieDomainValid(cookieDomain, urlHost string) bool {
-	// Normalize domain and host for comparison
 	cookieDomain = strings.ToLower(cookieDomain)
 	urlHost = strings.ToLower(urlHost)
-
-	// If cookie domain is equal to URL host, it's valid
 	if cookieDomain == urlHost {
 		return true
 	}
-
-	// If cookie domain is a suffix of URL host, preceded by a '.'
 	if strings.HasSuffix(urlHost, "."+cookieDomain) {
 		return true
 	}
-
 	return false
 }
 
-// HTTPCookieJar wraps cookiejar.CookieJar to provide a thread-safe cookie jar
-// that can convert between fasthttp and net/http cookies. It implements the
-// http.CookieJar interface while internally using fasthttp cookies for better
-// performance.
+// HTTPCookieJar provides a thread-safe cookie jar bridging fasthttp and net/http.
 type HTTPCookieJar struct {
 	*cookiejar.CookieJar
 	mux *sync.RWMutex
@@ -47,15 +40,21 @@ var cookieJarPool = &sync.Pool{
 	},
 }
 
+// AcquireCookieJar retrieves a cookie jar from the pool.
+// Optimization: Pooling reduces allocations.
 func AcquireCookieJar() *HTTPCookieJar {
 	return cookieJarPool.Get().(*HTTPCookieJar)
 }
 
+// ReleaseCookieJar returns a cookie jar to the pool.
+// Optimization: Enables reuse of cookie jars.
 func ReleaseCookieJar(cj *HTTPCookieJar) {
 	cj.CookieJar.Release()
 	cookieJarPool.Put(cj)
 }
 
+// SetCookies sets cookies for the given URL, thread-safely.
+// Optimization: Uses write lock for safe concurrent modification.
 func (cj *HTTPCookieJar) SetCookies(u *url.URL, cookies []*http.Cookie) {
 	cj.mux.Lock()
 	defer cj.mux.Unlock()
@@ -64,15 +63,15 @@ func (cj *HTTPCookieJar) SetCookies(u *url.URL, cookies []*http.Cookie) {
 	}
 }
 
+// Cookies retrieves cookies for the given URL, thread-safely.
+// Optimization: Uses read lock for concurrent read safety.
 func (cj *HTTPCookieJar) Cookies(u *url.URL) []*http.Cookie {
 	cj.mux.RLock()
 	defer cj.mux.RUnlock()
-
 	cs := make([]*http.Cookie, 0)
-
 	for _, cookie := range *(cj.CookieJar) {
 		d, p := bytes.B2s(cookie.Domain()), bytes.B2s(cookie.Path())
-		if d != "" && isCookieDomainValid(d, u.Hostname()) {
+		if d != "" && !isCookieDomainValid(d, u.Hostname()) {
 			continue
 		}
 		if p != "" && p != "/" && p != u.Path {
@@ -99,16 +98,14 @@ func (cj *HTTPCookieJar) Cookies(u *url.URL) []*http.Cookie {
 			SameSite: sameSite,
 			Raw:      cookie.String(),
 		})
-
 	}
-
 	return cs
 }
 
+// HTTPCookie2FastHTTPCookie converts an http.Cookie to a fasthttp.Cookie.
+// Optimization: Uses fasthttp pooling for cookie objects.
 func HTTPCookie2FastHTTPCookie(c *http.Cookie) *fasthttp.Cookie {
-
 	cookie := fasthttp.AcquireCookie()
-
 	cookie.SetKey(c.Name)
 	cookie.SetValue(c.Value)
 	cookie.SetPath(c.Path)
@@ -117,7 +114,6 @@ func HTTPCookie2FastHTTPCookie(c *http.Cookie) *fasthttp.Cookie {
 	cookie.SetMaxAge(c.MaxAge)
 	cookie.SetSecure(c.Secure)
 	cookie.SetHTTPOnly(c.HttpOnly)
-
 	sameSite := fasthttp.CookieSameSiteDefaultMode
 	switch c.SameSite {
 	case http.SameSiteLaxMode:
@@ -127,7 +123,6 @@ func HTTPCookie2FastHTTPCookie(c *http.Cookie) *fasthttp.Cookie {
 	case http.SameSiteNoneMode:
 		sameSite = fasthttp.CookieSameSiteNoneMode
 	}
-
 	cookie.SetSameSite(sameSite)
 	return cookie
 }

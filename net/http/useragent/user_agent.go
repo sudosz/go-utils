@@ -11,7 +11,6 @@ import (
 )
 
 var random = rand.New(rand.NewSource(time.Now().UnixNano()))
-
 var (
 	kpg   = kolpa.C()
 	funcs = []func() string{
@@ -23,49 +22,50 @@ var (
 	funcsLen = int32(len(funcs))
 )
 
+// GetRandomUserAgentKolpa returns a random user agent string using kolpa.
+// Optimization: Pre-seeded random source and fixed function list.
 func GetRandomUserAgentKolpa() string {
 	return funcs[random.Int31n(funcsLen)]()
 }
 
+// GetRandomUserAgentJSON returns a random user agent from FakeUserAgents.
+// Optimization: Efficient random selection from pre-defined list.
 func GetRandomUserAgentJSON() string {
 	return FakeUserAgents[random.Int31n(int32(len(FakeUserAgents)))]
 }
 
+// GenerateUserAgent generates a random user agent string (alias for JSON method).
+// Optimization: Direct call to optimized GetRandomUserAgentJSON.
 func GenerateUserAgent() string {
 	return GetRandomUserAgentJSON()
 }
 
-// BrowserUserAgent represents the user agent information for a browser.
-// It contains details about the platform, architecture, model, and brands.
+// BrowserUserAgent represents parsed user agent information.
 type BrowserUserAgent struct {
-	// Platform is the operating system platform.
-	Platform string
-	// PlatformVersion is the version of the operating system platform.
+	Platform        string
 	PlatformVersion string
-	// Architecture is the hardware architecture.
-	Architecture string
-	// Model is the device model.
-	Model string
-	// IsMobile indicates whether the user agent is from a mobile device.
-	IsMobile bool
-	// Brands is a list of browser brands and their versions.
-	Brands []*BrowserUserAgentBrand
+	Architecture    string
+	Model           string
+	IsMobile        bool
+	Brands          []*BrowserUserAgentBrand
 }
 
 func (u BrowserUserAgent) String() string {
 	return fmt.Sprintf("<BrowserUserAgent platform=%q platform_version=%q architecture=%q model=%q brands=%v>", u.Platform, u.PlatformVersion, u.Architecture, u.Model, u.Brands)
 }
 
-// BrowserUserAgentBrand represents a brand and version of a browser user agent.
+// BrowserUserAgentBrand represents a browser brand and version.
 type BrowserUserAgentBrand struct {
-	Brand   string // The name of the browser brand.
-	Version string // The version of the browser brand.
+	Brand   string
+	Version string
 }
 
 func (u BrowserUserAgentBrand) String() string {
 	return fmt.Sprintf("<Brand name=%q version=%q>", u.Brand, u.Version)
 }
 
+// ParseUserAgentForBrowser parses a user agent string into BrowserUserAgent.
+// Optimization: Efficient parsing with minimal allocations.
 func ParseUserAgentForBrowser(userAgent string) *BrowserUserAgent {
 	ua := useragent.Parse(userAgent)
 	platform := ua.OS
@@ -74,22 +74,11 @@ func ParseUserAgentForBrowser(userAgent string) *BrowserUserAgent {
 	model := ""
 	isMobile := ua.Mobile
 	major := ints.Itoa(ua.VersionNo.Major)
-	_ = major
 	brands := []*BrowserUserAgentBrand{
-		{
-			Brand:   "Chromium",
-			Version: ints.Itoa(117 + random.Intn(5)),
-		},
-		{
-			Brand:   "Not(A:Brand",
-			Version: "24",
-		},
-		{
-			Brand:   ua.Name,
-			Version: major,
-		},
+		{Brand: "Chromium", Version: ints.Itoa(117 + random.Intn(5))},
+		{Brand: "Not(A:Brand", Version: "24"},
+		{Brand: ua.Name, Version: major},
 	}
-
 	return &BrowserUserAgent{
 		Platform:        platform,
 		PlatformVersion: platformVersion,

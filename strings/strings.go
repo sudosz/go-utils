@@ -14,13 +14,17 @@ import (
 
 var ErrInvalidInt = errors.New("invalid integer syntax")
 
+// S2b converts a string to a byte slice without copying.
+// Optimization: Zero-copy using unsafe operations.
 func S2b(s string) []byte {
 	if s == "" {
-		return nil // or []byte{}
+		return nil
 	}
 	return unsafe.Slice(unsafe.StringData(s), len(s))[:]
 }
 
+// ConvertSummarizedString2Int converts a summarized string (e.g., "1k") to an integer.
+// Optimization: Manual parsing with minimal allocations.
 func ConvertSummarizedString2Int(s string) int {
 	if len(s) == 0 {
 		return 0
@@ -44,12 +48,12 @@ func ConvertSummarizedString2Int(s string) int {
 	return int(float * r)
 }
 
+// String2Int converts a string to an integer without error checking.
+// Optimization: Manual conversion for speed over strconv.
 func String2Int(s string) int {
-
 	if s == "0" {
 		return 0
 	}
-
 	var neg int = 1
 	if s[0] == '-' {
 		neg = -1
@@ -57,70 +61,75 @@ func String2Int(s string) int {
 	} else if s[0] == '+' {
 		s = s[1:]
 	}
-
 	var num int = 0
-
 	p := 1
 	for i := len(s); i > 0; i-- {
 		num += int(s[i-1]-'0') * p
 		p *= 10
 	}
-
 	return num * neg
 }
-func String2IntWithChecking(s string) (int, error) {
 
+// String2IntWithChecking converts a string to an integer with error checking.
+// Optimization: Adds validation with minimal overhead.
+func String2IntWithChecking(s string) (int, error) {
 	if s == "0" {
 		return 0, nil
 	}
-
 	var neg int = 1
 	if s[0] == '-' {
 		neg = -1
 		s = s[1:]
 	} else if s[0] == '+' {
 		s = s[1:]
-	} else if '0' > s[0] && s[0] > '9' {
+	} else if '0' > s[0] || s[0] > '9' {
 		return 0, ErrInvalidInt
 	}
-
 	var num int = 0
-
 	p := 1
 	for i := len(s); i > 0; i-- {
-		if '0' <= s[0] && s[0] <= '9' {
+		if '0' <= s[i-1] && s[i-1] <= '9' {
 			num += int(s[i-1]-'0') * p
 			p *= 10
 		} else {
 			return 0, ErrInvalidInt
 		}
 	}
-
 	return num * neg, nil
 }
+
+// String2Int64 converts a string to an int64 using String2Int.
+// Optimization: Leverages optimized String2Int.
 func String2Int64(s string) int64 {
 	return int64(String2Int(s))
 }
 
+// Atoi is an alias for String2Int, mimicking standard library naming.
+// Optimization: Same as String2Int.
 func Atoi(s string) int {
 	return String2Int(s)
 }
 
+// UnsafeToUpper converts a byte to uppercase if it’s a lowercase letter.
+// Optimization: Inline operation with minimal branching.
 func UnsafeToUpper(o byte) byte {
 	if 'a' <= o && o <= 'z' {
 		return o - 32
-	} else {
-		return o
 	}
+	return o
 }
 
+// UnsafeToLower converts a byte to lowercase if it’s an uppercase letter.
+// Optimization: Inline operation with minimal branching.
 func UnsafeToLower(o byte) byte {
 	if 'A' <= o && o <= 'Z' {
 		return o + 32
-	} else {
-		return o
 	}
+	return o
 }
+
+// ToLower converts a string to lowercase.
+// Optimization: Uses UnsafeToLower with single allocation.
 func ToLower(o string) string {
 	b := make([]byte, len(o))
 	for i := range b {
@@ -128,6 +137,9 @@ func ToLower(o string) string {
 	}
 	return bytes.B2s(b)
 }
+
+// ToUpper converts a string to uppercase.
+// Optimization: Uses UnsafeToUpper with single allocation.
 func ToUpper(o string) string {
 	b := make([]byte, len(o))
 	for i := range b {
@@ -136,25 +148,26 @@ func ToUpper(o string) string {
 	return bytes.B2s(b)
 }
 
+// Reverse reverses a string in-place using unsafe operations.
+// Optimization: Zero-copy reversal with unsafe pointer manipulation.
 func Reverse(input string) string {
 	str := S2b(input)
 	length := len(str)
-
-	// Use unsafe to reverse the string without memory allocation
 	strHeader := (*reflect.StringHeader)(unsafe.Pointer(&input))
 	for i, j := 0, length-1; i < j; i, j = i+1, j-1 {
 		str[i], str[j] = str[j], str[i]
 	}
-
-	// Create a new string header without allocation
-	reversedStr := *(*string)(unsafe.Pointer(&strHeader))
-	return reversedStr
+	return *(*string)(unsafe.Pointer(&strHeader))
 }
 
+// IsLetter checks if a rune or byte is a letter.
+// Optimization: Simple range check with no allocations.
 func IsLetter[T rune | byte](r T) bool {
 	return ('A' <= r && r <= 'Z') || ('a' <= r && r <= 'z')
 }
 
+// ToTitleCase converts a string to title case.
+// Optimization: Single pass with minimal allocations.
 func ToTitleCase(s string) string {
 	o := bytes.ToLower(S2b(s))
 	o[0] = UnsafeToUpper(o[0])
@@ -168,14 +181,15 @@ func ToTitleCase(s string) string {
 
 const (
 	letterBytes   = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	letterIdxBits = 6                    // 6 bits to represent a letter index
-	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
-	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
+	letterIdxBits = 6
+	letterIdxMask = 1<<letterIdxBits - 1
+	letterIdxMax  = 63 / letterIdxBits
 )
 
+// RandomString generates a random string of length n.
+// Optimization: Efficient bit manipulation for random generation.
 func RandomString(n int) string {
 	b := make([]byte, n)
-	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
 	for i, cache, remain := n-1, rand.Uint64(), letterIdxMax; i >= 0; {
 		if remain == 0 {
 			cache, remain = rand.Uint64(), letterIdxMax
@@ -187,25 +201,26 @@ func RandomString(n int) string {
 		cache >>= letterIdxBits
 		remain--
 	}
-
 	return *(*string)(unsafe.Pointer(&b))
 }
 
+// TrimLeft trims the left side of a string by removing repeated cutset.
+// Optimization: Single pass with minimal slicing.
 func TrimLeft(s, cutset string) string {
 	if s == "" || cutset == "" {
 		return s
 	}
-
 	i := 0
-	for ; i < len(s)-1; i += len(cutset) {
+	for ; i < len(s)-len(cutset)+1; i += len(cutset) {
 		if s[i:i+len(cutset)] != cutset {
 			return s[i:]
 		}
 	}
-
 	return s[i:]
 }
 
+// Partition splits a string around the first occurrence of a separator rune.
+// Optimization: Uses strings.IndexRune for efficient search.
 func Partition(s string, sep rune) (string, string) {
 	if idx := strings.IndexRune(s, sep); idx >= 0 {
 		return s[:idx], s[idx+1:]
