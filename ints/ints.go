@@ -1,9 +1,9 @@
-package ints
+package intutils
 
 import (
 	"strconv"
 
-	"github.com/sudosz/go-utils/bytes"
+	bytesutils "github.com/sudosz/go-utils/bytes"
 )
 
 const maxIntBufferSize = 19
@@ -33,7 +33,7 @@ func Int2Bytes(i, size int) []byte {
 // Optimization: Uses a fixed-size buffer and manual conversion for speed.
 func Int64ToBytes(i int64) []byte {
 	if i == 0 {
-		return bytes.S2b("0")
+		return bytesutils.S2b("0")
 	}
 	var buf [maxIntBufferSize]byte
 	idx := maxIntBufferSize - 1
@@ -56,7 +56,7 @@ func Int64ToBytes(i int64) []byte {
 // Int64ToString converts an int64 to a string using Int64ToBytes.
 // Optimization: Zero-copy conversion via B2s.
 func Int64ToString(i int64) string {
-	return bytes.B2s(Int64ToBytes(i))
+	return bytesutils.B2s(Int64ToBytes(i))
 }
 
 // Int2String converts an int to a string using Int64ToString.

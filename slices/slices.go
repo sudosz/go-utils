@@ -1,4 +1,4 @@
-package slices
+package sliceutils
 
 // RemoveFromSlice removes the first occurrence of an element from the slice.
 // Optimization: In-place removal with single allocation.

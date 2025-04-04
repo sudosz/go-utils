@@ -1,4 +1,4 @@
-package net
+package netutils
 
 import (
 	"bufio"
@@ -13,10 +13,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/sudosz/go-utils/bytes"
-	"github.com/sudosz/go-utils/ints"
-	"github.com/sudosz/go-utils/pool"
-	"github.com/sudosz/go-utils/strings"
+	bytesutils "github.com/sudosz/go-utils/bytes"
+	intutils "github.com/sudosz/go-utils/ints"
+	poolutils "github.com/sudosz/go-utils/pool"
+	stringutils "github.com/sudosz/go-utils/strings"
 )
 
 // AuthProvider defines a function that provides authentication strings.
@@ -46,7 +46,7 @@ const (
 )
 
 var (
-	bufPool    = pool.NewLRULimitedBufferPool(1<<10, 1<<7, 1*time.Minute)
+	bufPool    = poolutils.NewLRULimitedBufferPool(1<<10, 1<<7, 1*time.Minute)
 	HopHeaders = [...]string{
 		"Connection",
 		"Keep-Alive",
@@ -67,7 +67,7 @@ func BasicAuthHeader(username, password []byte) string {
 	buf := make([]byte, totalLen)
 	copy(buf, basicAuthPrefix)
 	base64.StdEncoding.Encode(buf[basicAuthPrefixLen:], append(append(username, ':'), password...))
-	return bytes.B2s(buf)
+	return bytesutils.B2s(buf)
 }
 
 // CachedAuth returns a function caching the auth header for a specified duration.
@@ -93,7 +93,7 @@ func CachedAuth(provider ProxyCredentialsProvider, dur time.Duration) func() str
 // BasicAuthHeaderStr generates a Basic Auth header from string credentials.
 // Optimization: Leverages zero-copy S2b for inputs.
 func BasicAuthHeaderStr(username, password string) string {
-	return BasicAuthHeader(bytes.S2b(username), bytes.S2b(password))
+	return BasicAuthHeader(bytesutils.S2b(username), bytesutils.S2b(password))
 }
 
 // SimpleAuth returns a function generating auth headers without caching.
@@ -109,25 +109,25 @@ func SimpleAuth(provider ProxyCredentialsProvider) func() string {
 func JoinHostPort(host []byte, port []byte) string {
 	b := append(host, ':')
 	b = append(b, port...)
-	return bytes.B2s(b)
+	return bytesutils.B2s(b)
 }
 
 // JoinHostIntPort combines host bytes and an integer port into a string.
 // Optimization: Uses efficient Int64ToBytes for port conversion.
 func JoinHostIntPort(host []byte, port int) string {
-	return JoinHostPort(host, ints.Int64ToBytes(int64(port)))
+	return JoinHostPort(host, intutils.Int64ToBytes(int64(port)))
 }
 
 // JoinStrHostIntPort combines a string host and integer port into a string.
 // Optimization: Zero-copy S2b for host.
 func JoinStrHostIntPort(host string, port int) string {
-	return JoinHostIntPort(bytes.S2b(host), port)
+	return JoinHostIntPort(bytesutils.S2b(host), port)
 }
 
 // JoinStrHostStrPort combines string host and port into a single string.
 // Optimization: Zero-copy S2b for both inputs.
 func JoinStrHostStrPort(host string, port string) string {
-	return JoinHostPort(bytes.S2b(host), bytes.S2b(port))
+	return JoinHostPort(bytesutils.S2b(host), bytesutils.S2b(port))
 }
 
 // StatusOKBytes generates an HTTP OK status line for the given version.
@@ -150,11 +150,11 @@ func IsHTTPOK(buf []byte, isConnect bool) bool {
 		return false
 	}
 	switch {
-	case bytes.B2s(buf[:len(http10OKResponse)]) == http10OKResponse:
+	case bytesutils.B2s(buf[:len(http10OKResponse)]) == http10OKResponse:
 		return true
-	case bytes.B2s(buf[:len(http11OKResponse)]) == http11OKResponse:
+	case bytesutils.B2s(buf[:len(http11OKResponse)]) == http11OKResponse:
 		return true
-	case bytes.B2s(buf[:len(http2OKResponse)]) == http2OKResponse:
+	case bytesutils.B2s(buf[:len(http2OKResponse)]) == http2OKResponse:
 		return true
 	default:
 		return false
@@ -221,7 +221,7 @@ func Flush(w any) {
 	}
 }
 
-var copyBufPool = &pool.LimitedPool{
+var copyBufPool = &poolutils.LimitedPool{
 	New: func() any {
 		var b [copyBufSize]byte
 		return &b
@@ -343,8 +343,8 @@ func IsConnClosedErr(err error) bool {
 // PartitionIP4 splits an IPv4 address into its four parts.
 // Optimization: Uses efficient string partitioning.
 func PartitionIP4(ip string) (string, string, string, string) {
-	part1, part234 := strings.Partition(ip, '.')
-	part2, part34 := strings.Partition(part234, '.')
-	part3, part4 := strings.Partition(part34, '.')
+	part1, part234 := stringutils.Partition(ip, '.')
+	part2, part34 := stringutils.Partition(part234, '.')
+	part3, part4 := stringutils.Partition(part34, '.')
 	return part1, part2, part3, part4
 }

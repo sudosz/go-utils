@@ -1,4 +1,4 @@
-package pool
+package poolutils
 
 import (
 	"container/list"

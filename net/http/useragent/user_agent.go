@@ -7,7 +7,7 @@ import (
 
 	"github.com/malisit/kolpa"
 	"github.com/mileusna/useragent"
-	"github.com/sudosz/go-utils/ints"
+	intutils "github.com/sudosz/go-utils/ints"
 )
 
 var random = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -69,13 +69,13 @@ func (u BrowserUserAgentBrand) String() string {
 func ParseUserAgentForBrowser(userAgent string) *BrowserUserAgent {
 	ua := useragent.Parse(userAgent)
 	platform := ua.OS
-	platformVersion := ints.Itoa(ua.OSVersionNo.Major)
+	platformVersion := intutils.Itoa(ua.OSVersionNo.Major)
 	arch := ""
 	model := ""
 	isMobile := ua.Mobile
-	major := ints.Itoa(ua.VersionNo.Major)
+	major := intutils.Itoa(ua.VersionNo.Major)
 	brands := []*BrowserUserAgentBrand{
-		{Brand: "Chromium", Version: ints.Itoa(117 + random.Intn(5))},
+		{Brand: "Chromium", Version: intutils.Itoa(117 + random.Intn(5))},
 		{Brand: "Not(A:Brand", Version: "24"},
 		{Brand: ua.Name, Version: major},
 	}

@@ -15,19 +15,19 @@
 
 ## Packages
 
-| Package    | Description                                                                 |
-| ---------- | --------------------------------------------------------------------------- |
-| `bytes`    | Optimized byte manipulation utilities.                                       |
-| `cache`    | High-performance caching implementations.                                    |
-| `channel`  | Robust channel utilities with comprehensive testing.                             |
-| `gopool`   | Efficient goroutine pool management for concurrent tasks.                      |
-| `ints`     | Optimized integer manipulation functions.                                     |
-| `iter`     | Flexible iterator implementations for data processing.                          |
-| `net`      | Networking utilities, including HTTP client helpers and user agent parsing. |
-| `pool`     | Versatile pool implementations (LRU, limited, recycler) for resource management. |
-| `slices`   | Optimized slice manipulation utilities for common operations.              |
-| `strings`  | String manipulation with unsafe optimizations for critical performance paths. |
-| `terminal` | ANSI terminal utilities for rich command-line interfaces.                 |
+| Package        | Description                                                                 |
+| -------------- | --------------------------------------------------------------------------- |
+| `bytesutils`   | Optimized byte manipulation utilities.                                       |
+| `cacheutils`   | High-performance caching implementations.                                    |
+| `channelutils` | Robust channel utilities with comprehensive testing.                             |
+| `gopool`       | Efficient goroutine pool management for concurrent tasks.                      |
+| `intutils`     | Optimized integer manipulation functions.                                     |
+| `iterutils`    | Flexible iterator implementations for data processing.                          |
+| `net`          | Networking utilities, including HTTP client helpers and user agent parsing. |
+| `poolutils`    | Versatile pool implementations (LRU, limited, recycler) for resource management. |
+| `sliceutils`   | Optimized slice manipulation utilities for common operations.              |
+| `stringutils`  | String manipulation with unsafe optimizations for critical performance paths. |
+| `terminalutils`| ANSI terminal utilities for rich command-line interfaces.                 |
 
 ## Installation
 
@@ -42,11 +42,11 @@ Import the specific package you need:
 ```go
 import (
         "fmt"
-        "github.com/sudosz/go-utils/strings"
+        stringutils "github.com/sudosz/go-utils/strings"
 )
 
 func main() {
-        result := strings.ToLower("EXAMPLE STRING")
+        result := stringutils.ToLower("EXAMPLE STRING")
         fmt.Println(result) // Output: example string
 }
 ```

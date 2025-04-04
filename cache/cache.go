@@ -1,10 +1,10 @@
-package cache
+package cacheutils
 
 import (
 	"time"
 
 	"git.mills.io/prologic/bitcask"
-	"github.com/sudosz/go-utils/bytes"
+	bytesutils "github.com/sudosz/go-utils/bytes"
 )
 
 // Cache represents a cache using bitcask as the underlying storage.
@@ -25,7 +25,7 @@ func New(folder string) (*Cache, error) {
 // Get retrieves the value for the given string key, converting it to bytes.
 // Optimization: Uses zero-copy S2b for key conversion.
 func (c *Cache) Get(key string) ([]byte, error) {
-	return c.GetBytes(bytes.S2b(key))
+	return c.GetBytes(bytesutils.S2b(key))
 }
 
 // GetBytes retrieves the value for the given byte slice key using a hash.
@@ -37,7 +37,7 @@ func (c *Cache) GetBytes(key []byte) ([]byte, error) {
 // Has checks if the given string key exists in the cache.
 // Optimization: Uses zero-copy S2b for key conversion.
 func (c *Cache) Has(key string) bool {
-	return c.HasBytes(bytes.S2b(key))
+	return c.HasBytes(bytesutils.S2b(key))
 }
 
 // HasBytes checks if the given byte slice key exists in the cache.
@@ -49,7 +49,7 @@ func (c *Cache) HasBytes(key []byte) bool {
 // Set sets the value for the given string key and value.
 // Optimization: Uses zero-copy S2b for both key and value.
 func (c *Cache) Set(key string, value string) error {
-	return c.SetBytesKV(bytes.S2b(key), bytes.S2b(value))
+	return c.SetBytesKV(bytesutils.S2b(key), bytesutils.S2b(value))
 }
 
 // SetBytesKVWithTTL sets the value for the byte slice key with a time-to-live.
@@ -61,13 +61,13 @@ func (c *Cache) SetBytesKVWithTTL(key []byte, value []byte, ttl time.Duration) e
 // SetBytesK sets the value for a byte slice key with a string value.
 // Optimization: Zero-copy conversion for value.
 func (c *Cache) SetBytesK(key []byte, value string) error {
-	return c.SetBytesKV(key, bytes.S2b(value))
+	return c.SetBytesKV(key, bytesutils.S2b(value))
 }
 
 // SetBytesV sets the value for a string key with a byte slice value.
 // Optimization: Zero-copy conversion for key.
 func (c *Cache) SetBytesV(key string, value []byte) error {
-	return c.SetBytesKV(bytes.S2b(key), value)
+	return c.SetBytesKV(bytesutils.S2b(key), value)
 }
 
 // SetBytesKV sets the value for a byte slice key and value.
@@ -91,7 +91,7 @@ func (c *Cache) DelAll() error {
 // Del deletes the given string key from the cache.
 // Optimization: Zero-copy conversion for key.
 func (c *Cache) Del(key string) error {
-	return c.DelBytes(bytes.S2b(key))
+	return c.DelBytes(bytesutils.S2b(key))
 }
 
 // DelBytes deletes the given byte slice key from the cache.

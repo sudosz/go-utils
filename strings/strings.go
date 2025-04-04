@@ -1,4 +1,4 @@
-package strings
+package stringutils
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 
 	"math/rand/v2"
 
-	"github.com/sudosz/go-utils/bytes"
+	bytesutils "github.com/sudosz/go-utils/bytes"
 )
 
 var ErrInvalidInt = errors.New("invalid integer syntax")
@@ -135,7 +135,7 @@ func ToLower(o string) string {
 	for i := range b {
 		b[i] = UnsafeToLower(o[i])
 	}
-	return bytes.B2s(b)
+	return bytesutils.B2s(b)
 }
 
 // ToUpper converts a string to uppercase.
@@ -145,7 +145,7 @@ func ToUpper(o string) string {
 	for i := range b {
 		b[i] = UnsafeToUpper(o[i])
 	}
-	return bytes.B2s(b)
+	return bytesutils.B2s(b)
 }
 
 // Reverse reverses a string in-place using unsafe operations.
@@ -169,14 +169,14 @@ func IsLetter[T rune | byte](r T) bool {
 // ToTitleCase converts a string to title case.
 // Optimization: Single pass with minimal allocations.
 func ToTitleCase(s string) string {
-	o := bytes.ToLower(S2b(s))
+	o := bytesutils.ToLower(S2b(s))
 	o[0] = UnsafeToUpper(o[0])
 	for i := 1; i < len(o); i++ {
 		if IsLetter[byte](o[i]) && !IsLetter[byte](o[i-1]) {
 			o[i] = UnsafeToUpper(o[i])
 		}
 	}
-	return bytes.B2s(o)
+	return bytesutils.B2s(o)
 }
 
 const (

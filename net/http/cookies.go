@@ -1,4 +1,4 @@
-package http
+package httputils
 
 import (
 	"net/http"
@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/dgrr/cookiejar"
-	"github.com/sudosz/go-utils/bytes"
+	bytesutils "github.com/sudosz/go-utils/bytes"
 	"github.com/valyala/fasthttp"
 )
 
@@ -70,7 +70,7 @@ func (cj *HTTPCookieJar) Cookies(u *url.URL) []*http.Cookie {
 	defer cj.mux.RUnlock()
 	cs := make([]*http.Cookie, 0)
 	for _, cookie := range *(cj.CookieJar) {
-		d, p := bytes.B2s(cookie.Domain()), bytes.B2s(cookie.Path())
+		d, p := bytesutils.B2s(cookie.Domain()), bytesutils.B2s(cookie.Path())
 		if d != "" && !isCookieDomainValid(d, u.Hostname()) {
 			continue
 		}
@@ -87,10 +87,10 @@ func (cj *HTTPCookieJar) Cookies(u *url.URL) []*http.Cookie {
 			sameSite = http.SameSiteNoneMode
 		}
 		cs = append(cs, &http.Cookie{
-			Name:     bytes.B2s(cookie.Key()),
-			Value:    url.QueryEscape(bytes.B2s(cookie.Value())),
-			Domain:   bytes.B2s(cookie.Domain()),
-			Path:     bytes.B2s(cookie.Path()),
+			Name:     bytesutils.B2s(cookie.Key()),
+			Value:    url.QueryEscape(bytesutils.B2s(cookie.Value())),
+			Domain:   bytesutils.B2s(cookie.Domain()),
+			Path:     bytesutils.B2s(cookie.Path()),
 			Expires:  cookie.Expire(),
 			MaxAge:   cookie.MaxAge(),
 			Secure:   cookie.Secure(),
